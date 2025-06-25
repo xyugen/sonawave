@@ -1,42 +1,81 @@
 import { ALLOWED_TYPES, MAX_NUMBER_OF_FILES } from "@/constants/audio-params";
+import ffmpeg from "fluent-ffmpeg";
+import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
+import path from "path";
 
 export const POST = async (request: NextRequest) => {
   const formData = await request.formData();
 
-  // Validations
-  if (!formData.get("audioFile")) {
+  const files = formData.getAll("audioFile");
+
+  if (files.length === 0) {
     return NextResponse.json(
       { message: "No files selected." },
       { status: 400 }
     );
   }
 
-  // Max number of files
-  if (formData.getAll("audioFile").length > MAX_NUMBER_OF_FILES) {
+  if (files.length > MAX_NUMBER_OF_FILES) {
     return NextResponse.json(
       { message: "Max 5 files allowed." },
       { status: 400 }
     );
   }
 
-  // Iterate over the form data
-  for (const [key, value] of formData.entries()) {
-    // Check if the file is of a supported type
-    if (key === "audioFile") {
-      const file = value as File;
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        return NextResponse.json(
-          { message: "File has an unsupported format." },
-          { status: 400 }
-        );
-      }
+  for (const file of files) {
+    if (!(file instanceof File) || !ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { message: "Invalid file format." },
+        { status: 400 }
+      );
     }
   }
 
-  // TODO: Format files
+  const processedFiles: string[] = [];
+
+  for (const file of files) {
+    if (!(file instanceof File)) {
+      return NextResponse.json(
+        { message: "Invalid file format." },
+        { status: 400 }
+      );
+    }
+
+    const tempPath = "tmp";
+
+    // Write file to a temporary path
+    const tempInputPath = path.join(tempPath, file.name);
+    const tempOutputPath = path.join(
+      tempPath,
+      `${path.parse(file.name).name}_processed.wav`
+    );
+
+    const fileBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(fileBuffer);
+    fs.writeFile(tempInputPath, buffer, () => {});
+
+    const outputPath = path.join(tempPath, `${file.name}_processed.wav`);
+
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(tempInputPath)
+        .audioChannels(1)
+        .audioFrequency(16000)
+        .audioCodec("pcm_s16le")
+        .output(tempOutputPath)
+        .on("end", () => {
+          processedFiles.push(outputPath);
+          resolve();
+        })
+        .on("error", reject)
+        .run();
+    });
+
+    fs.unlinkSync(tempInputPath);
+  }
 
   return NextResponse.json({
-    message: "Files uploaded successfully!",
+    message: "Files processed successfully!",
+    processedFiles,
   });
 };

@@ -64,7 +64,7 @@ const UploadForm = () => {
     inputRef.current.value = "";
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setIsLoading(true);
@@ -89,9 +89,10 @@ const UploadForm = () => {
       .catch((error) => {
         console.error(error);
         toast.error("Error uploading files.");
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-
-    setIsLoading(false);
   };
 
   return (
