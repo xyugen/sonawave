@@ -7,8 +7,7 @@ export default function Home() {
       <Header />
       <main className="mt-4">
         <div className="flex justify-center">
-
-        <UploadForm />
+          <UploadForm />
         </div>
       </main>
     </div>

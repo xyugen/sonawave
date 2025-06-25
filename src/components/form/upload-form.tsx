@@ -1,5 +1,6 @@
 "use client";
 
+import { ApiRoutes } from "@/constants/api-routes";
 import {
   ALLOWED_TYPES,
   MAX_FILE_SIZE_MB,
@@ -14,6 +15,7 @@ import { Input } from "../ui/input";
 const UploadForm = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<FileList | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -62,11 +64,41 @@ const UploadForm = () => {
     inputRef.current.value = "";
   };
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setIsLoading(true);
+
+    if (!files) {
+      toast.error("No files selected.");
+      return;
+    }
+
+    const formData = new FormData(e.currentTarget);
+
+    fetch(ApiRoutes.UPLOAD_FILE, {
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        toast.success("Files uploaded successfully!");
+        handleReset();
+      })
+      .catch((error) => {
+        console.error(error);
+        toast.error("Error uploading files.");
+      });
+
+    setIsLoading(false);
+  };
+
   return (
     <form
       className="space-y-2 w-full sm:w-2/3 md:w-1/2"
-      action=""
-      method="POST"
+      encType="multipart/form-data"
+      onSubmit={handleSubmit}
     >
       <div className="flex gap-2">
         <Input
@@ -78,7 +110,12 @@ const UploadForm = () => {
           ref={inputRef}
         />
         {files && (
-          <Button size={"icon"} type="reset" variant={"outline"} onClick={handleReset}>
+          <Button
+            size={"icon"}
+            type="reset"
+            variant={"outline"}
+            onClick={handleReset}
+          >
             <X className="size-4" />
           </Button>
         )}
@@ -96,7 +133,7 @@ const UploadForm = () => {
         </div>
       )}
 
-      <Button className="w-full" type="submit" disabled={!files}>
+      <Button className="w-full" type="submit" disabled={!files || isLoading}>
         Upload
       </Button>
     </form>

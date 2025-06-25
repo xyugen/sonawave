@@ -1,3 +1,3 @@
 export enum ApiRoutes {
-  UPLOAD_FILE = "/api/upload_file",
+  UPLOAD_FILE = "/api/upload-file",
 }
