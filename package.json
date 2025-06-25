@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@ffmpeg/util": "^0.12.2",
     "@hookform/resolvers": "^5.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.15",

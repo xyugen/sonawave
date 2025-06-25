@@ -1,8 +1,11 @@
 import { ALLOWED_TYPES, MAX_NUMBER_OF_FILES } from "@/constants/audio-params";
+import ffmpegPath from "@ffmpeg-installer/ffmpeg";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
+
+ffmpeg.setFfmpegPath(ffmpegPath.path);
 
 export const POST = async (request: NextRequest) => {
   try {
